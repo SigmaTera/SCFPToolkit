@@ -234,10 +234,31 @@ BOOL Process(HWND hWnd)
 			downloader.uninitial();
 		}
 	}
+	if (IsDllComponentRegistered(TEXT("{91C74C59-177B-4F8F-82F6-26DCEAB9D7C9}")) == FALSE)
+	{
+		Sleep(1000);
+		tray.ModifyBalloonText(TEXT("提示"), TEXT("正在为您安装软证书控件."));
+		CreateDirectory(strDownloadPath, NULL);
+		if (downloader.initial(TEXT("rz.qdccb.com"), 443) == 0)
+		{
+			downloader.renameFile(true);
+			if (downloader.get(TEXT("/financingPlatform/ocx"), TEXT("CryptoKit.CertEnrollment.qdccb.x86.exe"), (LPCTSTR)strDownloadPath, TEXT("CryptoKit.CertEnrollment.qdccb.x86.exe")) == 0)
+			{
+				strDownloadPath += TEXT("\\CryptoKit.CertEnrollment.qdccb.x86.exe");
+				ShellExecute(strDownloadPath, TEXT("/S"));
+				tray.ModifyBalloonText(TEXT("提示"), TEXT("安装成功."));
+			}
+			else
+			{
+				tray.ModifyBalloonText(TEXT("提示"), TEXT("控件下载失败了:("));
+			}
+			downloader.uninitial();
+		}
+	}
 	int i = 0;
 	while (1)
 	{
-		if (IsDllComponentRegistered(TEXT("{20A2D8D1-5A6E-4B46-B3C1-3415678028F0}")))
+		if (IsDllComponentRegistered(TEXT("{20A2D8D1-5A6E-4B46-B3C1-3415678028F0}")) && IsDllComponentRegistered(TEXT("{91C74C59-177B-4F8F-82F6-26DCEAB9D7C9}")))
 		{
 			break;
 		}
