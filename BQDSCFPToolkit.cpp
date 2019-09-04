@@ -205,8 +205,14 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 BOOL Process(HWND hWnd)
 {
 	LHttpDownloader downloader;
+	CString strFavoritePath;
+	CString strInternetSC;
+	CRegKey key;
+
+	BOOL bNeedAdd = TRUE;
 	DWORD dwConnectFlag = 0;
 	CString strDownloadPath = TEXT("C:\\BQDSCFPKit");
+
 	
 	if (InternetGetConnectedState(&dwConnectFlag, 0) == FALSE)
 	{
@@ -269,7 +275,92 @@ BOOL Process(HWND hWnd)
 		Sleep(1000);
 	}
 	EnumWindows(EnumWindowsProc, 0);
+
+	GetFavoritePath(strFavoritePath.GetBuffer(MAX_PATH));
+	strFavoritePath.ReleaseBuffer();
+	strInternetSC = strFavoritePath + TEXT("\\青岛银行线上供应链融资平台.url");
+	LRESULT lr = key.Open(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE"), KEY_ALL_ACCESS);
+	if (lr == ERROR_SUCCESS)
+	{
+		key.Create(key, TEXT("SCFPToolkit"));
+		key.Close();
+	}
+	if (key.Open(HKEY_LOCAL_MACHINE, TEXT("Software\\SCFPToolkit"), KEY_ALL_ACCESS) == ERROR_SUCCESS)
+	{
+		ULONG ulLength = 128;
+		TCHAR szValue[128] = { 0 };
+		key.QueryStringValue(TEXT("AddUrl"), szValue, &ulLength);
+		if (lstrcmp(szValue, TEXT("No")) != 0)
+		{
+			if (IsFileExisted(strInternetSC) == FALSE)
+			{
+				if (MessageBox(NULL, TEXT("是否将青岛银行线上供应链融资平台网址加入收藏夹？"), TEXT("提示"), MB_YESNO) == IDYES)
+				{
+					AddUrlToFavorite();
+				}
+				else
+				{
+					bNeedAdd = FALSE;
+				}
+			}
+			
+		}
+	}
+	
+	
+	
+	if (bNeedAdd == FALSE)
+	{
+		if (key.Open(HKEY_LOCAL_MACHINE, TEXT("Software\\SCFPToolkit"), KEY_ALL_ACCESS) == ERROR_SUCCESS)
+		{
+			key.SetStringValue(TEXT("AddUrl"), TEXT("No"));
+			key.Close();
+		}
+	}
+
 	if (!bFound)
 		ShellExecute(TEXT("iexplore.exe"), TEXT("https://rz.qdccb.com/financingPlatform/"), SW_MAXIMIZE, FALSE);
+
 	return TRUE;
+}
+
+BOOL AddUrlToFavorite()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CString strFavPath;
+	CString strFavTabPath;
+
+	TCHAR szFavPath[MAX_PATH] = { 0 };
+	TCHAR szPath[MAX_PATH] = { 0 };
+	TCHAR aszName[][32] = { TEXT("青岛银行线上供应链融资平台") };
+	TCHAR aszUrl[][128] = { TEXT("https://rz.qdccb.com/financingPlatform/") };
+	BOOL bResult = TRUE;
+	GetFavoritePath(szFavPath);
+
+	strFavPath = szFavPath;
+	strFavTabPath = strFavPath + TEXT("\\Links");
+
+	for (int i = 0; i < sizeof(aszUrl) / sizeof(aszUrl[0]); i++)
+	{
+		wsprintf(szPath, TEXT("%s\\%s.url"), strFavPath, aszName[i]);
+		if (E_FAIL == CreateInternetShortcut(aszUrl[i], szPath, TEXT(""), TEXT("")))
+		{
+			bResult = FALSE;
+		}
+		CString strInternetSC = szPath;
+		wsprintf(szPath, TEXT("%s\\%s.url"), strFavTabPath, aszName[i]);
+		/*if (E_FAIL == CreateInternetShortcut(aszUrl[i], szPath, TEXT(""), TEXT("")))
+		{
+			bResult = FALSE;
+		}*/
+		CopyFile(strInternetSC, szPath, FALSE);
+
+
+	}
+	
+	if (bResult)
+	{
+		return TRUE;
+	}
+	return FALSE;
 }
