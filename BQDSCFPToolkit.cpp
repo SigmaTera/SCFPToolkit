@@ -285,6 +285,10 @@ BOOL Process(HWND hWnd)
 		key.Create(key, TEXT("SCFPToolkit"));
 		key.Close();
 	}
+	
+	if (!bFound)
+		ShellExecute(TEXT("iexplore.exe"), TEXT("https://rz.qdccb.com/financingPlatform/"), SW_MAXIMIZE, FALSE);
+
 	if (key.Open(HKEY_LOCAL_MACHINE, TEXT("Software\\SCFPToolkit"), KEY_ALL_ACCESS) == ERROR_SUCCESS)
 	{
 		ULONG ulLength = 128;
@@ -318,8 +322,6 @@ BOOL Process(HWND hWnd)
 		}
 	}
 
-	if (!bFound)
-		ShellExecute(TEXT("iexplore.exe"), TEXT("https://rz.qdccb.com/financingPlatform/"), SW_MAXIMIZE, FALSE);
 
 	return TRUE;
 }
